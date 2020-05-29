@@ -661,5 +661,6 @@ def select_row(idx, cd, rows):
     
 
 ######## START EVERYTHING ########    
-#app.run_server(debug=True, use_reloader=True, host='0.0.0.0', dev_tools_hot_reload=True)
-app.run_server(host='0.0.0.0', debug=False)
+if __name__ == '__main__':
+	#app.run_server(debug=True, use_reloader=True, host='0.0.0.0', dev_tools_hot_reload=True)
+	app.run_server(host='0.0.0.0', debug=False)

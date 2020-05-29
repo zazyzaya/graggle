@@ -14,7 +14,7 @@ from nltk.stem import WordNetLemmatizer
 LEMMATIZER = WordNetLemmatizer()
 STOPWORDS = set(stopwords.words('english'))
 
-HOME = '/mnt/raid0_24TB/isaiah/repo/dash/data/'
+HOME = 'data/'
 MODEL_F = HOME + 'hv.model'
 VECTORS_F = HOME + 'title_vecs.npz'
 
