@@ -1,1 +1,1 @@
-nohup gunicorn -b 0.0.0.0:8050 graggle > /dev/null &
+gunicorn -b 0.0.0.0:8050 graggle &

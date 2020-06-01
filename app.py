@@ -262,7 +262,11 @@ l = go.Layout(
 data = [] #build_data(Xn, Yn, titles, labels, ids) + edges
 fig = go.Figure(data=data, layout=l)
 
-app = dash.Dash(__name__)
+app = dash.Dash(
+	__name__, 
+	url_base_pathname='/graggle/'
+)
+
 app.layout = html.Div([     
     # Header
     html.Div([
