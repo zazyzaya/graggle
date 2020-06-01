@@ -7,6 +7,7 @@ import dash_html_components as html
 import random 
 import dash_table
 
+import visdcc
 from dash.exceptions import PreventUpdate
 from simple_search import query
 from load_data import g, df, graph_df
@@ -245,6 +246,11 @@ axis = dict(
 )
 
 l = go.Layout(
+    title={
+        'text': 'Related Papers',
+        'x': 0.5,
+        'xanchor': 'center'
+    },
     showlegend=False,
     scene=dict(
         xaxis=dict(axis),
@@ -267,6 +273,10 @@ app = dash.Dash(
 	url_base_pathname='/graggle/'
 )
 
+with open('description.md', 'r') as f:
+    desc = f.read()
+
+app.title = 'Graggle: A Graph-based Search Engine for COVID-19'
 app.layout = html.Div([     
     # Header
     html.Div([
@@ -281,7 +291,44 @@ app.layout = html.Div([
             style = {
                 'margin-top': '2px'
             }
-        )
+        ),
+
+        # Affiliations
+        html.Div([
+            html.A([
+                html.Img(
+                    src=app.get_asset_url('GLab_Logo.png'),
+                    style={
+                        'height': '40px',
+                        'display': 'inline-block',
+                        'vertical-align': 'top',
+                        'margin-right': '10px'
+                    }
+                )],
+                href='https://www2.seas.gwu.edu/~howie/glab.html',
+                target='_blank'
+            ),
+            html.A([
+                html.Img(
+                    src=app.get_asset_url('gw-logo.png'),
+                    style={
+                        'height': '40px',
+                        'display': 'inline-block',
+                        'vertical-align': 'top'
+                    }
+                )],
+                href='https://www.seas.gwu.edu/',
+                target='_blank'
+            )],
+        style={
+            'float': 'right',
+            'padding-right': '17px',
+            'vertical-align': 'top',
+            'margin-top': '12px',
+            'top': 5,
+            'right': 0,
+            'position': 'absolute'
+        })
         ],
         
         style={
@@ -299,44 +346,69 @@ app.layout = html.Div([
     
     # Search bar
     html.Div([
-        html.H3(
-            ['Search for papers:'],
-            style = {
-                'display': 'inline-block',
-                'padding-right': '10px',
-                'width': '200px',
-                'color': '#033C5A'
-            }   
-        ),
-        dcc.Input(
-            id='paper-search',
-            type='text',
-            placeholder='Search...',
-            value='',
-            debounce=True,
+        html.Div([
+            dcc.Input(
+                id='paper-search',
+                type='text',
+                placeholder='Keywords, e.g., virus, infection, vaccine, influenza, sequence, etc.',
+                value='',
+                debounce=True,
+                style={
+                    'display': 'inline-block',
+                    'width': '60%',
+                    'height': '30px',
+                    'border-radius': '10px',
+                    'margin-right': '5px',
+                    'font-size': '15px'
+                }
+            ),
+            html.Button(
+                'Graggle Search', 
+                id='search-button',
+                style={
+                    'display': 'inline-block',
+                    'border-radius': '4px',
+                    'height': '30px',
+                }
+            ),
+            ],
             style={
-                'display': 'inline-block',
-                'width': '50%',
-                'border-radius': '4px',
-                'margin-right': '5px'
+                'width': '100%',
+                'position': 'relative',
+                'top': '50%',
+                '-ms-transform': 'translateY(-50%)',
+                'transform': 'translateY(-50%)'
             }
         ),
-        html.Button(
-            'Search', 
-            id='search-button',
-            style={
-                'display': 'inline-block',
-                'border-radius': '4px'
-            }
-        )],
+        ],
         style={
             'background': "linear-gradient(90deg, rgba(170,152,104,1) 0%, rgba(140,126,88,1) 100%)",
             'width': '100%',
             'height': '60px',
-            'text-align': 'center'
+            'text-align': 'center',
         }
     ),
     
+    # Brief description
+    html.Div([
+            html.P([
+                'Graggle is an experimental search engine that uses a novel graph-based datastructure, Context Graph, to identify important links between papers. To use it, simply search for papers as you normally would in the search bar. The resulting graph displayed is the k-hop neighbors of the paper from your search. ',
+                html.A(
+                    'Read more', href='#desc'
+                )
+            ],
+            style={
+                'width': '100%'
+            }),
+        ],
+        style={
+            'width': '90%',
+            'margin-left': '50px',
+            'margin-right': '250px',
+            'margin-top': '5px'
+        }
+    ),
+
     # Middle
     html.Div([
     
@@ -434,7 +506,7 @@ app.layout = html.Div([
                 'margin-left': 50, 
                 'float': 'left',
                 'width': '28%',
-                'margin-top': 25
+                'margin-top': 15
             }         
         ),
         
@@ -449,7 +521,7 @@ app.layout = html.Div([
                 style={
                     'float': 'right', 
                     'width': '65%',
-                    'height': "87vh"
+                    'height': "85vh"
                 }
             )],
         )],
@@ -462,14 +534,14 @@ app.layout = html.Div([
     # About
     html.Div([
             html.H3(['About']),
-            html.P(['Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce sapien nulla, molestie ut fermentum a, pulvinar a mi. Proin urna nibh, egestas sit amet consectetur et, tincidunt nec tellus. Donec ex dolor, sagittis ut vehicula consequat, euismod in dolor. Aliquam erat volutpat. Morbi dictum, diam id auctor tristique, tellus neque porta lorem, vitae posuere arcu nibh eu felis. Quisque aliquet lectus id nibh rutrum aliquam. Sed tincidunt sapien vel quam pretium, quis fermentum odio ullamcorper. Aliquam et eros at magna pellentesque bibendum. Morbi eu eros at odio lacinia placerat et lacinia mauris. Duis eleifend tristique vestibulum. Cras nec dui nec urna mollis condimentum. Pellentesque blandit, augue fermentum porta finibus, velit velit ultricies quam, ac molestie tortor dui sit amet augue. Praesent ornare nisi et odio vehicula, non ultrices nibh egestas. Ut eu elit sem.']),
-            html.P(['Vivamus interdum tortor sed orci suscipit, non posuere odio ullamcorper. Praesent ac sem sit amet enim cursus dignissim id ut nunc. Integer at tortor lacus. Praesent scelerisque egestas vulputate. Sed eu efficitur leo. In fringilla vestibulum dolor a dictum. Nullam mattis tortor in congue pharetra. Phasellus hendrerit ac dolor nec varius.'])
+            dcc.Markdown([desc])    
         ],
         style={
             'margin-left': '50px',
             'margin-right': '50px',
             'float': 'left'
-        }
+        },
+        id='desc'
              
     ),
     
@@ -509,7 +581,7 @@ app.layout = html.Div([
                         'vertical-align': 'bottom'
                     }
                 )],
-                href='https://github.com/GraphLab-GWU/isaiah/tree/master/dash',       
+                href='https://github.com/zazyzaya/graggle',       
                 target='_blank'
             )    
             ],
@@ -521,48 +593,7 @@ app.layout = html.Div([
                 'vertical-align': 'bottom'
             }
         ),
-
-        # Affiliations
-        html.Div([
-            html.A([
-                html.Div(
-                    ['GL'],
-                    style={
-                        'width': '40px',
-                        'height': '40px',
-                        'border-radius': '50%',
-                        'font-size': '20px',
-                        'color': '#033C5A',
-                        'line-height': '40px',
-                        'text-align': 'center',
-                        'background': '#fff',
-                        'display': 'inline-block',
-                        'margin-right': '17px',
-                        'vertical-align': 'bottom'
-                    }
-                )],
-                href='https://www2.seas.gwu.edu/~howie/glab.html',
-                target='_blank'
-            ),
-            html.A([
-                html.Img(
-                    src=app.get_asset_url('gw-logo.png'),
-                    style={
-                        'height': '40px',
-                        'display': 'inline-block',
-                        'vertical-align': 'bottom'
-                    }
-                )],
-                href='https://www.seas.gwu.edu/',
-                target='_blank'
-            )],
-        style={
-            'float': 'right',
-            'padding-right': '17px',
-            'vertical-align': 'bottom',
-            'display': 'inline-block',
-            'margin-top': '12px'
-        })],
+        ],
              
         style={
             'bottom': 0,
@@ -574,7 +605,10 @@ app.layout = html.Div([
             'float': 'left'
         }
         
-    )],
+    ),
+    # Allow custom javascript calls from python 
+    visdcc.Run_js(id='javascript')
+    ],
     style={
         'font-family': 'sans-serif',
     }
@@ -663,6 +697,7 @@ def select_row(idx, cd, rows):
     elif 'live-graph' in trigger:
         return cd['points'][0]['customdata']
     
+
 
 ######## START EVERYTHING ########    
 if __name__ == '__main__':
