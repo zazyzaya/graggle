@@ -61,7 +61,7 @@ def get_all_g(n=None, hops=None, min_edge=None, max_edges=None):
     
     return Xn, Yn, [], titles, labels, ids
 
-def get_data_v(n=None, hops=3, min_edge=25, max_edges=10):
+def get_data_v(n=None, hops=3, min_edge=10, max_edges=10):
     ''' 
     Places nodes based on their node2vec embedding position
     after T-SNE dim redux
@@ -276,6 +276,36 @@ app = dash.Dash(
 with open('description.md', 'r') as f:
     desc = f.read()
 
+# Add in google analytics info
+app.index_string = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-168853683-1"></script>
+        <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-168853683-1');
+        </script>
+
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+'''
 app.title = 'Graggle: A Graph-based Search Engine for COVID-19'
 app.layout = html.Div([     
     # Header
@@ -297,7 +327,7 @@ app.layout = html.Div([
         html.Div([
             html.A([
                 html.Img(
-                    src=app.get_asset_url('GLab_Logo.png'),
+                    src=app.get_asset_url('graph_lab_logo_ben.png'),
                     style={
                         'height': '40px',
                         'display': 'inline-block',
@@ -444,7 +474,7 @@ app.layout = html.Div([
                     k : str(k) for k in range(10,100,10)
                 }
             ),
-            html.P(['N-Hop neighbors:']),
+            html.P(['K-Hop neighbors:']),
             dcc.Slider(
                 id='num-hops',
                 min=0,
@@ -455,14 +485,27 @@ app.layout = html.Div([
                     k : str(k) for k in range(0,8)
                 }
             ),
-            html.P(['Minimum edge weight:']),
-            dcc.Input(
-                id='e-weight',
-                min=0,
-                max=1000,
-                type='number',
-                value=25
-            ),
+            html.Div([
+                html.P(['Minimum edge weight:']),
+                dcc.Input(
+                    id='e-weight',
+                    min=0,
+                    max=1000,
+                    type='number',
+                    value=10
+                ),
+                html.A(
+                    html.Button(
+                        'View Selected Paper',
+                        style={
+                            'margin-left': '15px'
+                        }
+                    ),
+                    href='',
+                    target='_blank',
+                    id='visit'
+                )
+            ]),
             html.P(['Search results:']),
             html.Div([
                 dash_table.DataTable(
@@ -521,7 +564,7 @@ app.layout = html.Div([
                 style={
                     'float': 'right', 
                     'width': '65%',
-                    'height': "85vh"
+                    'height': "80vh"
                 }
             )],
         )],
@@ -655,7 +698,7 @@ def update_graph(disp, nid, max_neighbors, nhops, ew, current):
     Xn, Yn, edges, titles, labels, ids = disp(**params)
     
     nodes = build_data(Xn, Yn, titles, labels, ids)
-    
+
     return {
         'data': nodes+edges,
         'layout': l,
@@ -679,9 +722,9 @@ def search_papers(n, nn, text):
         
 
 @app.callback(
-    Output('node-id', 'value'),
+    Output('node-id', 'value'), 
     [Input('search-results', 'selected_rows'),
-     Input('live-graph', 'selectedData')],
+     Input('live-graph', 'clickData')],
     [State('search-results', 'data')]
 )    
 def select_row(idx, cd, rows):
@@ -696,10 +739,21 @@ def select_row(idx, cd, rows):
     
     elif 'live-graph' in trigger:
         return cd['points'][0]['customdata']
-    
 
+@app.callback(
+    Output('visit', 'href'),
+    [Input('node-id', 'value')]
+)
+def view_paper(nid):
+    url = df['url'][nid]
+    
+    if str(url) == 'nan':
+        return 'http://graphlab.seas.gwu.edu/404.html'
+    else:
+        return url
+        
+    
 
 ######## START EVERYTHING ########    
 if __name__ == '__main__':
-	#app.run_server(debug=True, use_reloader=True, host='0.0.0.0', dev_tools_hot_reload=True)
-	app.run_server(host='0.0.0.0', debug=False)
+	app.run_server(debug=True, use_reloader=True, host='0.0.0.0', dev_tools_hot_reload=True)
