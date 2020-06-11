@@ -5,6 +5,7 @@ import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import random 
+import copy
 import dash_table
 
 import visdcc
@@ -14,7 +15,6 @@ from load_data import g, df, graph_df
 from dash.dependencies import Output, Input, State
 
 ####### DATA PROCESSING ########
-
 build_titles = lambda ids : [
     df['title'][i] + '<br>' 
     + format_journal(df['journal'][i])
@@ -107,7 +107,7 @@ def get_data_v(n=None, hops=3, min_edge=10, max_edges=10):
             mode='markers',
             marker=dict(
                 symbol='star',
-                size=15,
+                size=20,
                 color=graph_df['y'][n],
                 colorscale='Viridis'
             ),
@@ -190,7 +190,7 @@ def get_data(n=None, hops=3, min_edge=25, max_edges=10):
             mode='markers',
             marker=dict(
                 symbol='star',
-                size=15,
+                size=20,
                 color=graph_df['y'][n],
                 colorscale='Viridis'
             ),
@@ -223,6 +223,7 @@ def build_data(Xn, Yn, titles, labels, ids):
         mode='markers',
         name='nodes',
         marker=dict(symbol='circle',
+                    size=10,
                     color=labels,
                     colorscale='Viridis',
                     line=dict(color='rgb(50,50,50)', width=1)
@@ -237,14 +238,6 @@ def build_data(Xn, Yn, titles, labels, ids):
 
 
 ######## WEB LAYOUT ########
-axis = dict(
-    showticklabels=False,
-    title='',
-    showgrid=False,
-    zeroline=False,
-    showbackground=False,
-)
-
 l = go.Layout(
     title={
         'text': 'Related Papers',
@@ -252,21 +245,23 @@ l = go.Layout(
         'xanchor': 'center'
     },
     showlegend=False,
-    scene=dict(
-        xaxis=dict(axis),
-        yaxis=dict(axis),
-    ),
     autosize=True,
     margin=dict(
-        t=50
+        t=25,
+        b=0,
+        l=0,
+        r=0
     ),
     hovermode='closest',
-    clickmode='event+select',
+    clickmode='event',
 )
 
 #Xn, Yn, edges, titles, labels, ids = get_all_g()
-data = [] #build_data(Xn, Yn, titles, labels, ids) + edges
+data = [] 
+last_id = None
 fig = go.Figure(data=data, layout=l)
+fig.update_xaxes(showticklabels=False)
+fig.update_yaxes(showticklabels=False)
 
 app = dash.Dash(
 	__name__, 
@@ -422,7 +417,7 @@ app.layout = html.Div([
     # Brief description
     html.Div([
             html.P([
-                'Graggle is an experimental search engine that uses a novel graph-based datastructure, Context Graph, to identify important links between papers. To use it, simply search for papers as you normally would in the search bar. The resulting graph displayed is the k-hop neighbors of the paper from your search. ',
+                'Graggle is an experimental search engine that uses a novel graph-based datastructure to identify important links between papers. To use it, simply search for papers as you normally would in the search bar. The resulting graph displayed is the k-hop neighbors of the paper from your search. ',
                 html.A(
                     'Read more', href='#desc'
                 )
@@ -448,11 +443,11 @@ app.layout = html.Div([
                     id='disp-method',
                     options=[
                         {
-                            'label': 'Use node2vec coords',
+                            'label': 'Use T-SNE coords',
                             'value': 'yes'
                         }
                     ],
-                    value = ['yes']
+                    value=[]
             ),
             html.Div([
                 dcc.Input(
@@ -464,25 +459,28 @@ app.layout = html.Div([
             style={'display': 'none'}  
             ),  
             html.P(['Number of neighbors to include']),
-            dcc.Slider(
-                id='num-neighbors',
-                min=0,
-                max=100,
-                step=1,
-                value=10,
-                marks={
-                    k : str(k) for k in range(10,100,10)
-                }
-            ),
+            
+
+            #dcc.Slider(
+            #    id='num-neighbors',
+            #    min=0,
+            #    max=100,
+            #    step=1,
+            #    value=10,
+            #    marks={
+            #        k : str(k) for k in range(10,100,10)
+            #    },
+            #),
+
             html.P(['K-Hop neighbors:']),
             dcc.Slider(
                 id='num-hops',
                 min=0,
-                max=7,
+                max=4,
                 step=1,
                 value=2,
                 marks={
-                    k : str(k) for k in range(0,8)
+                    k : str(k) for k in range(1,4)
                 }
             ),
             html.Div([
@@ -493,17 +491,6 @@ app.layout = html.Div([
                     max=1000,
                     type='number',
                     value=10
-                ),
-                html.A(
-                    html.Button(
-                        'View Selected Paper',
-                        style={
-                            'margin-left': '15px'
-                        }
-                    ),
-                    href='',
-                    target='_blank',
-                    id='visit'
                 )
             ]),
             html.P(['Search results:']),
@@ -518,7 +505,7 @@ app.layout = html.Div([
                     data=[],
                     style_data={
                         'whiteSpace': 'normal',
-                        'height': 'auto'
+                        'height': 'auto',
                     },
                     style_data_conditional=[
                         {
@@ -531,7 +518,7 @@ app.layout = html.Div([
                         'fontWeight': 'bold'
                     },
                     style_table={
-                        'maxHeight': '400px',
+                        'maxHeight': '30vh',
                         'overflowY': 'scroll'
                     },
                     style_cell={
@@ -562,11 +549,56 @@ app.layout = html.Div([
                 animate=True,
                 animation_options={'frame': {'redraw': True}},
                 style={
-                    'float': 'right', 
-                    'width': '65%',
-                    'height': "80vh"
+                    'width': '95%',
+                    'height': 'calc(70vh - 50px)'
                 }
-            )],
+            ),
+            html.Div([
+                html.A(
+                        html.Button(
+                            'View Selected Paper',
+                            style={
+                                'width': '85%', 
+                                'height': '50px',
+                                'font-size': '15px',
+                                'color': '#FFF',
+                                'background-color': 'rgba(3,60,90,1)',
+                                'border-radius': '10px',
+                                'vertical-align': 'top'
+                            },
+                            id='visit-button'
+                        ),
+                        href='',
+                        target='_blank',
+                        id='visit',
+                ),
+
+                html.Button(
+                    "Undo",
+                    id='undo',
+                    style={
+                        'width': '12%',
+                        'color': '#FFF',
+                        'background-color': 'rgba(3,60,90,1)',
+                        'height': '50px',
+                        'font-size': '15px',
+                        'margin-left': '5px',
+                        'border-radius': '10px',
+                        'vertical-align': 'top'
+                    }
+                )],
+                style={
+                    'width': '95%',
+                    'margin-top': '5px'
+                }
+            )
+            ],
+            style={
+                'width': '65%',
+                'float': 'right',
+                'height': '80vh',
+                'text-align': 'center'
+            }
         )],
         style={
             'width': '100%',
@@ -654,6 +686,7 @@ app.layout = html.Div([
     ],
     style={
         'font-family': 'sans-serif',
+        'color': 'rgba(3,60,90,1)'
     }
 )
 
@@ -665,15 +698,17 @@ app.layout = html.Div([
     [   
         Input('disp-method', 'value'),
         Input('node-id', 'value'),
-        Input('num-neighbors', 'value'),
         Input('num-hops', 'value'),
         Input('e-weight', 'value'),
     ],
     [State('live-graph', 'figure')]
 )
-def update_graph(disp, nid, max_neighbors, nhops, ew, current):
+def update_graph(disp, nid, nhops, ew, current):
     if nid == None:
         return current
+
+    ctx = dash.callback_context
+    trigger = ctx.triggered[0]['prop_id']
     
     if len(disp) == 0:
         disp = get_data
@@ -682,7 +717,6 @@ def update_graph(disp, nid, max_neighbors, nhops, ew, current):
     
     params = {
         'n': nid,
-        'max_edges': max_neighbors,
         'hops': nhops,
         'min_edge': ew
     }
@@ -700,7 +734,7 @@ def update_graph(disp, nid, max_neighbors, nhops, ew, current):
     nodes = build_data(Xn, Yn, titles, labels, ids)
 
     return {
-        'data': nodes+edges,
+        'data': edges[1:]+nodes+edges[0:1],
         'layout': l,
     } 
  
@@ -724,10 +758,14 @@ def search_papers(n, nn, text):
 @app.callback(
     Output('node-id', 'value'), 
     [Input('search-results', 'selected_rows'),
-     Input('live-graph', 'clickData')],
-    [State('search-results', 'data')]
+     Input('live-graph', 'clickData'),
+     Input('undo', 'n_clicks')],
+    [State('search-results', 'data'),
+     State('node-id', 'value')]
 )    
-def select_row(idx, cd, rows):
+def select_row(idx, cd, n, rows, old):
+    global last_id
+
     if (rows==[] or idx==[]) and cd == None:
         raise PreventUpdate
     
@@ -735,22 +773,35 @@ def select_row(idx, cd, rows):
     trigger = ctx.triggered[0]['prop_id']
     
     if 'search-results' in trigger:
-        return rows[idx[0]]['index']
+        newId = rows[idx[0]]['index']
     
     elif 'live-graph' in trigger:
-        return cd['points'][0]['customdata']
+        newId = cd['points'][0]['customdata']
+
+    elif 'undo' in trigger:
+        newId = last_id 
+
+    last_id = old
+    return newId
 
 @app.callback(
-    Output('visit', 'href'),
+    [Output('visit', 'href'),
+     Output('visit-button', 'children')],
     [Input('node-id', 'value')]
 )
 def view_paper(nid):
     url = df['url'][nid]
+    title = df['title'][nid]
+
+    while len(title) > 80:
+        title = ' '.join(title.split(' ')[:-1]) + '...'
     
+    title = 'Access the paper "' + title + '"'
+
     if str(url) == 'nan':
-        return 'http://graphlab.seas.gwu.edu/404.html'
+        return 'http://graphlab.seas.gwu.edu/404.html', title
     else:
-        return url
+        return url, title 
         
     
 
