@@ -1,2 +1,2 @@
 pkill -9 gunicorn
-nohup gunicorn -b 0.0.0.0:8050 graggle > /dev/null &
+nohup gunicorn -b 0.0.0.0:8050 -t 100 graggle > /dev/null &

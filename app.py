@@ -457,8 +457,7 @@ app.layout = html.Div([
                 )
             ], 
             style={'display': 'none'}  
-            ),  
-            html.P(['Number of neighbors to include']),
+            ), 
             
 
             #dcc.Slider(
