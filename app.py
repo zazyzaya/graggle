@@ -8,7 +8,6 @@ import random
 import copy
 import dash_table
 
-import visdcc
 from dash.exceptions import PreventUpdate
 from simple_search import query
 from load_data import g, df, graph_df
@@ -678,11 +677,7 @@ app.layout = html.Div([
             'background-color': '#033C5A',
             'float': 'left'
         }
-        
-    ),
-    # Allow custom javascript calls from python 
-    visdcc.Run_js(id='javascript')
-    ],
+    )],
     style={
         'font-family': 'sans-serif',
         'color': 'rgba(3,60,90,1)'

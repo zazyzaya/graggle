@@ -1,2 +1,5 @@
 data/graph.npz
 new_data/
+data/
+old_data/
+__pycache__/
