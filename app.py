@@ -33,6 +33,9 @@ def format_link(l):
     if str(l) == 'nan':
         return 'Not Found'
     else:
+        if ';' in l:
+            l = l.split(';')[0]
+
         return '[&#8599;]' + '(' + l + ')'
 
 def format_journal(s):
@@ -262,6 +265,9 @@ fig = go.Figure(data=data, layout=l)
 fig.update_xaxes(showticklabels=False)
 fig.update_yaxes(showticklabels=False)
 
+num_papers = '{:,}'.format(len(graph_df))
+num_papers = num_papers.split(',')[0] + ' thousand'
+
 app = dash.Dash(
 	__name__, 
 	url_base_pathname='/graggle/'
@@ -416,7 +422,8 @@ app.layout = html.Div([
     # Brief description
     html.Div([
             html.P([
-                'Graggle is an experimental search engine that uses a novel graph-based datastructure to identify important links between papers. To use it, simply search for papers as you normally would in the search bar. The resulting graph displayed is the k-hop neighbors of the paper from your search. ',
+                'Graggle is an experimental search engine that uses a novel graph-based datastructure to identify important links between papers. To use it, simply search for papers as you normally would in the search bar. The resulting graph displayed is the k-hop neighbors of the paper from your search.' +
+                ' Try it now, and query our database of over %s papers! ' % num_papers,
                 html.A(
                     'Read more', href='#desc'
                 )
