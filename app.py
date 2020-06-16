@@ -449,7 +449,7 @@ app.layout = html.Div([
                     id='disp-method',
                     options=[
                         {
-                            'label': 'Use T-SNE coords',
+                            'label': 'Use t-SNE coords',
                             'value': 'yes'
                         }
                     ],
@@ -791,7 +791,7 @@ def select_row(idx, cd, n, rows, old):
     [Input('node-id', 'value')]
 )
 def view_paper(nid):
-    url = df['url'][nid]
+    url = df['url'][nid].split(';')[0]
     title = df['title'][nid]
 
     while len(title) > 80:
